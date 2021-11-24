@@ -10,10 +10,10 @@ data {
    vector[D] b;
  }
  model {
+ a~normal(0,1);  //multi_normal(0,I)
+ s~normal(0,1);
 
  for(n in 1:N){
-    a~normal(0,1);  //multi_normal(rep_vector(0,D),);
-    s~normal(0,1);
 
     vector[D] v1a;
     vector[D] v2a;
