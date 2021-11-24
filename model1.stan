@@ -11,9 +11,9 @@ data {
    //real samp2;
  }
  model {
-
+ a~normal(0,1);  //multi_normal(0,I);
+ 
  for(n in 1:N){
-    a~normal(0,1);  //multi_normal(rep_vector(0,D),);
 
     vector[D] v1t;
     vector[D] v2t;
