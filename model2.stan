@@ -7,7 +7,7 @@ data {
  }
  parameters {
    vector[D] a;
-   vector[D] b;
+   vector[D] s;
  }
  model {
  a~normal(0,1);  //multi_normal(0,I)
