@@ -1,14 +1,12 @@
-from nltk.corpus import wordnet
-
 import os
 import tqdm
-import requests
 import zipfile
 import nltk
 import numpy as np
 import argparse
 import pickle
 import json
+import requests
 
 #data = https://www.ims.uni-stuttgart.de/en/research/resources/experiment-data/antonym-synonym-dataset/
 nltk.download('wordnet')
@@ -56,14 +54,27 @@ def fetch_embeddings(glove_file):
             word=values[0]
             vector = np.asarray(values[1:], 'float32')
             embedding_dict[word] = vector
-
+    
     return embedding_dict
 
+def fetch_embedding_matrix(embedding_dict, dim):
+    wordlist = []
+    res = np.zeros((len(embedding_dict), dim), dtype='float32')
+    i = 0
+    for word in sorted(embedding_dict.keys()):
+        wordlist.append(word)
+        res[i] = embedding_dict[word]
+        i += 1
 
-def load_syn_ant_dset(dir, embedding_dict):
+    return res, wordlist
+
+def load_syn_ant_dset(dir, embedding_dict, dim):
     v1_embeds = []
     v2_embeds = []
     y = []
+    word_list = set()
+    word1_list = []
+    word2_list = []
 
     for file in os.listdir(dir):
         filepath = os.path.join(dir, file)
@@ -75,8 +86,16 @@ def load_syn_ant_dset(dir, embedding_dict):
                     v1_embeds.append(embedding_dict[word1].tolist())
                     v2_embeds.append(embedding_dict[word2].tolist())
                     y.append(int(label.strip('\n')))
+                    word_list.add(word1)
+                    word_list.add(word2)
+                    word1_list.append(word1)
+                    word2_list.append(word2)
     
-    return v1_embeds, v2_embeds, y
+    embedding_matrix = np.zeros((len(word_list), dim), dtype='float32')
+    for i, word in enumerate(list(word_list)):
+        embedding_matrix[i] = embedding_dict[word]
+    
+    return v1_embeds, v2_embeds, y, list(word_list), embedding_matrix, word1_list, word2_list
 
 
 
@@ -96,7 +115,10 @@ if __name__ == "__main__":
 
     embeddings = fetch_embeddings(glove_file)
 
-    word1_embeddings, word2_embeddings, y = load_syn_ant_dset(args.data_dir, embeddings)
+    word1_embeddings, word2_embeddings, y, word_list, embedding_matrix, word1_list, word2_list = load_syn_ant_dset(args.data_dir, embeddings, 100)
+
+    # embedding_matrix, word_list = fetch_embedding_matrix(embeddings, 100)
+
     data = json.dumps(
         {   
             "N": len(y),
@@ -106,6 +128,27 @@ if __name__ == "__main__":
             "y": y
         }
     )
-    
+
+
+
     with open(os.path.join(args.outdir, "data.json"), "w") as write_handle:
-         write_handle.write(data)
+        write_handle.write(data)
+        
+    with open(os.path.join(args.outdir, "embedding_matrix.pkl"), "wb") as write_handle:
+        pickle.dump(embedding_matrix, write_handle)
+    
+    with open(os.path.join(args.outdir, "word_list.pkl"), "wb") as write_handle:
+        pickle.dump(word_list, write_handle)
+    
+    with open(os.path.join(args.outdir, "word_list.pkl"), "wb") as write_handle:
+        pickle.dump(word_list, write_handle)
+    
+    with open(os.path.join(args.outdir, "pairs.pkl"), "wb") as write_handle:
+        pickle.dump(np.hstack((np.array(word1_embeddings), np.array(word2_embeddings), np.array(y).reshape(len(y), 1))), write_handle)
+    
+    word_pairs = []
+    for i in range(len(word1_list)):
+            word_pairs.append((word1_list[i], word2_list[i]))
+            
+    with open(os.path.join(args.outdir, "word_pairs.pkl"), "wb") as write_handle:
+        pickle.dump(word_pairs, write_handle)
