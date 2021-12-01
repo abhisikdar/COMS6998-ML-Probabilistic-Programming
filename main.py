@@ -4,7 +4,7 @@ import os
 from cmdstanpy import cmdstan_path, CmdStanModel
 
 stan = 'model2.stan'
-model = CmdStanModel(stan_file=bernoulli_stan)
+model = CmdStanModel(stan_file=stan)
 model.name
 model.stan_file
 model.exe_file
