@@ -1,7 +1,6 @@
 import os
 import tqdm
 import zipfile
-import nltk
 import numpy as np
 import argparse
 import pickle
@@ -9,12 +8,9 @@ import json
 import requests
 
 #data = https://www.ims.uni-stuttgart.de/en/research/resources/experiment-data/antonym-synonym-dataset/
-nltk.download('wordnet')
+GLOVE_URL = "http://nlp.stanford.edu/data/glove.6B.zip"
 
-from nltk.corpus import wordnet as wn
-URL = "http://nlp.stanford.edu/data/glove.6B.zip"
-
-def fetch_data(url=URL, target_file='glove.6B.zip', delete_zip=False):
+def fetch_data(url=GLOVE_URL, target_file='glove.6B.zip', delete_zip=False):
     #if the dataset already exists exit
     if os.path.isfile(target_file):
         print("datasets already downloded")
@@ -57,17 +53,6 @@ def fetch_embeddings(glove_file):
     
     return embedding_dict
 
-def fetch_embedding_matrix(embedding_dict, dim):
-    wordlist = []
-    res = np.zeros((len(embedding_dict), dim), dtype='float32')
-    i = 0
-    for word in sorted(embedding_dict.keys()):
-        wordlist.append(word)
-        res[i] = embedding_dict[word]
-        i += 1
-
-    return res, wordlist
-
 def load_syn_ant_dset(dir, embedding_dict, dim):
     v1_embeds = []
     v2_embeds = []
@@ -97,27 +82,24 @@ def load_syn_ant_dset(dir, embedding_dict, dim):
     
     return v1_embeds, v2_embeds, y, list(word_list), embedding_matrix, word1_list, word2_list
 
-
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--data-dir', dest='data_dir', required=True,
-                        help='Full path to the dataset directory containing all synonym and antonym files and glove embeddings')
+                        help='Full path to the dataset directory containing all synonym and antonym files')
+    parser.add_argument('--embedding-dir', dest='embedding_dir', required=True,
+                        help='Full path to the dataset directory containing glove embeddings')
     parser.add_argument('--outdir', dest='outdir', required=True,
                         help='Full path to the output directory where plot is saved')
 
     args = parser.parse_args()
 
-    # fetch_data()
+    #fetch_data()
 
-    glove_file = "glove.6B.100d.txt"
+    glove_file = os.path.join(args.embedding_dir, "glove.6B.100d.txt")
 
-    embeddings = fetch_embeddings(glove_file)
+    #embeddings = fetch_embeddings(glove_file)
 
     word1_embeddings, word2_embeddings, y, word_list, embedding_matrix, word1_list, word2_list = load_syn_ant_dset(args.data_dir, embeddings, 100)
-
-    # embedding_matrix, word_list = fetch_embedding_matrix(embeddings, 100)
 
     data = json.dumps(
         {   
@@ -136,9 +118,6 @@ if __name__ == "__main__":
         
     with open(os.path.join(args.outdir, "embedding_matrix.pkl"), "wb") as write_handle:
         pickle.dump(embedding_matrix, write_handle)
-    
-    with open(os.path.join(args.outdir, "word_list.pkl"), "wb") as write_handle:
-        pickle.dump(word_list, write_handle)
     
     with open(os.path.join(args.outdir, "word_list.pkl"), "wb") as write_handle:
         pickle.dump(word_list, write_handle)
