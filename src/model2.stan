@@ -36,6 +36,6 @@ data {
     dot_s = dot_s/sqrt(dot_product(v2s,v2s));
     dot_s = (dot_s+1)/2; // rescaling cosine similarity from [-1,1] to [0,1]
 
-    target+= y[n]*beta_lpdf(dot_a|50,1) +(1-y[n])*beta_lpdf(dot_s|1,50);
+    target+= y[n]*beta_lpdf(dot_s|50,1) +(1-y[n])*beta_lpdf(dot_a|1,50);
  }
  }
