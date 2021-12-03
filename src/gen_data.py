@@ -9,10 +9,43 @@ import requests
 
 #data = https://www.ims.uni-stuttgart.de/en/research/resources/experiment-data/antonym-synonym-dataset/
 GLOVE_URL = "http://nlp.stanford.edu/data/glove.6B.zip"
+DATA_URL = "https://www.ims.uni-stuttgart.de/documents/ressourcen/experiment-daten/antonym-synonym-dataset/ant_syn_pairs.zip"
 
-def fetch_data(url=GLOVE_URL, target_file='glove.6B.zip', delete_zip=False):
+def fetch_embeddings_file(url=GLOVE_URL, target_file, delete_zip=True):
     #if the dataset already exists exit
     if os.path.isfile(target_file):
+        print("datasets already downloded")
+        return
+
+    #download (large) zip file
+    #for large https request on stream mode to avoid out of memory issues
+    #see : http://masnun.com/2016/09/18/python-using-the-requests-module-to-download-large-files-efficiently.html
+    print("**************************")
+    print("  Downloading zip file")
+    print("  >_<  Please wait >_< ")
+    print("**************************")
+    response = requests.get(url, stream=True)
+    #read chunk by chunk
+    handle = open(target_file, "wb")
+    for chunk in tqdm.tqdm(response.iter_content(chunk_size=512)):
+        if chunk:  
+            handle.write(chunk)
+    handle.close()  
+    print("  Download completed ;) :") 
+    #extract zip_file
+    zf = zipfile.ZipFile(target_file)
+    print("1. Extracting {} file".format(target_file))
+    zf.extractall()
+    if delete_zip:
+        print("2. Deleting {} file".format(dataset_name+".zip"))
+        os.remove(path=zip_file)
+
+def download_dataset(url=DATA_URL, target_dir, delete_zip=True):
+    #if the dataset already exists exit
+    if os.path.exists(target_dir):
+        os.system("wc -l target_dir/* > tmp")
+        with open("tmp", 'r') as f:
+            if f == 
         print("datasets already downloded")
         return
 
@@ -83,21 +116,21 @@ def load_syn_ant_dset(dir, embedding_dict, dim):
     return v1_embeds, v2_embeds, y, list(word_list), embedding_matrix, word1_list, word2_list
 
 if __name__ == "__main__":
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('--data-dir', dest='data_dir', required=True,
                         help='Full path to the dataset directory containing all synonym and antonym files')
     parser.add_argument('--embedding-dir', dest='embedding_dir', required=True,
-                        help='Full path to the dataset directory containing glove embeddings')
+                        help='Full path to the directory containing glove embeddings')
     parser.add_argument('--outdir', dest='outdir', required=True,
                         help='Full path to the output directory where plot is saved')
 
     args = parser.parse_args()
 
-    #fetch_data()
-
     glove_file = os.path.join(args.embedding_dir, "glove.6B.100d.txt")
-
-    #embeddings = fetch_embeddings(glove_file)
+    fetch_embeddings_file(glove_file)
+    
+    embeddings = fetch_embeddings(glove_file)
 
     word1_embeddings, word2_embeddings, y, word_list, embedding_matrix, word1_list, word2_list = load_syn_ant_dset(args.data_dir, embeddings, 100)
 
@@ -110,8 +143,6 @@ if __name__ == "__main__":
             "y": y
         }
     )
-
-
 
     with open(os.path.join(args.outdir, "data.json"), "w") as write_handle:
         write_handle.write(data)
