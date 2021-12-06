@@ -7,8 +7,6 @@ data {
  }
  parameters {
    vector[D] a;
-   //real samp1;
-   //real samp2;
  }
  model {
  a~normal(0,1);  //multi_normal(0,I);
@@ -18,9 +16,7 @@ data {
     vector[D] v1t;
     vector[D] v2t;
     real dot;
-    //real samp1;
-    //real samp2;
-
+    
     v1t = v1[n].*a;
     v2t = v2[n].*a;
     dot = dot_product(v1t,v2t);
