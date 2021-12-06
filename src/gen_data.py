@@ -8,7 +8,6 @@ import json
 import requests
 import shutil
 
-#data = https://www.ims.uni-stuttgart.de/en/research/resources/experiment-data/antonym-synonym-dataset/
 GLOVE_URL = "http://nlp.stanford.edu/data/glove.6B.zip"
 DATA_URL = "https://www.ims.uni-stuttgart.de/documents/ressourcen/experiment-daten/antonym-synonym-dataset/ant_syn_pairs.zip"
 
