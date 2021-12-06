@@ -6,73 +6,81 @@ import argparse
 import pickle
 import json
 import requests
+import shutil
 
 #data = https://www.ims.uni-stuttgart.de/en/research/resources/experiment-data/antonym-synonym-dataset/
 GLOVE_URL = "http://nlp.stanford.edu/data/glove.6B.zip"
 DATA_URL = "https://www.ims.uni-stuttgart.de/documents/ressourcen/experiment-daten/antonym-synonym-dataset/ant_syn_pairs.zip"
 
-def fetch_embeddings_file(url=GLOVE_URL, target_file, delete_zip=True):
+def fetch_embeddings_file(target_file, target_dir, url=GLOVE_URL, delete_zip=True):
     #if the dataset already exists exit
     if os.path.isfile(target_file):
-        print("datasets already downloded")
+        print("Embeddings already downloded")
         return
 
-    #download (large) zip file
-    #for large https request on stream mode to avoid out of memory issues
-    #see : http://masnun.com/2016/09/18/python-using-the-requests-module-to-download-large-files-efficiently.html
+    # download (large) zip file
+    # for large https request on stream mode to avoid out of memory issues
+    # see : http://masnun.com/2016/09/18/python-using-the-requests-module-to-download-large-files-efficiently.html
     print("**************************")
     print("  Downloading zip file")
     print("  >_<  Please wait >_< ")
     print("**************************")
     response = requests.get(url, stream=True)
     #read chunk by chunk
-    handle = open(target_file, "wb")
+    handle = open('glove.zip', "wb")
     for chunk in tqdm.tqdm(response.iter_content(chunk_size=512)):
         if chunk:  
             handle.write(chunk)
     handle.close()  
     print("  Download completed ;) :") 
     #extract zip_file
-    zf = zipfile.ZipFile(target_file)
-    print("1. Extracting {} file".format(target_file))
-    zf.extractall()
+    zf = zipfile.ZipFile('glove.zip')
+    print("Extracting {} file".format('glove.zip'))
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+    zf.extractall(target_dir)
     if delete_zip:
-        print("2. Deleting {} file".format(dataset_name+".zip"))
-        os.remove(path=zip_file)
+        print("Deleting {} file".format("glove.zip"))
+        os.remove(path="glove.zip")
 
-def download_dataset(url=DATA_URL, target_dir, delete_zip=True):
+def download_dataset(target_dir, url=DATA_URL, delete_zip=True):
     #if the dataset already exists exit
     if os.path.exists(target_dir):
-        os.system("wc -l target_dir/* > tmp")
-        with open("tmp", 'r') as f:
-            if f == 
-        print("datasets already downloded")
-        return
+        count = 0
+        for f in os.listdir(target_dir):
+            path = os.path.join(target_dir, f)
+            if not os.path.isdir(path):
+                count += len(open(path, "r").readlines())
+        if count == 15632:
+            print("datasets already downloded")
+            return
+        print("All files not found/Corrupted download; downloading again")
 
-    #download (large) zip file
-    #for large https request on stream mode to avoid out of memory issues
-    #see : http://masnun.com/2016/09/18/python-using-the-requests-module-to-download-large-files-efficiently.html
-    print("**************************")
-    print("  Downloading zip file")
-    print("  >_<  Please wait >_< ")
-    print("**************************")
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+
     response = requests.get(url, stream=True)
-    #read chunk by chunk
-    handle = open(target_file, "wb")
+    handle = open('data.zip', "wb")
     for chunk in tqdm.tqdm(response.iter_content(chunk_size=512)):
         if chunk:  
             handle.write(chunk)
-    handle.close()  
-    print("  Download completed ;) :") 
+    handle.close() 
+    print("  Dataset download completed ;) :")
     #extract zip_file
-    zf = zipfile.ZipFile(target_file)
-    print("1. Extracting {} file".format(target_file))
+    
+    zf = zipfile.ZipFile('data.zip')
+    print("Extracting {} file".format('data.zip'))
     zf.extractall()
-    if delete_zip:
-        print("2. Deleting {} file".format(dataset_name+".zip"))
-        os.remove(path=zip_file)
+    source_dir = "./eacl2017"
+    file_names = os.listdir(source_dir)
+    
+    for file_name in file_names:
+        shutil.move(os.path.join(source_dir, file_name), target_dir)
 
-EMBEDDING_VECTOR_LENGTH = 50 # <=200
+    if delete_zip:
+        print("Deleting {} file".format("data.zip"))
+        os.remove(path="data.zip")
+        os.rmdir(path=source_dir)
 
 def fetch_embeddings(glove_file):
     embedding_dict = {}
@@ -128,7 +136,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     glove_file = os.path.join(args.embedding_dir, "glove.6B.100d.txt")
-    fetch_embeddings_file(glove_file)
+
+    fetch_embeddings_file(glove_file, args.embedding_dir)
+    
+    download_dataset(args.data_dir)
     
     embeddings = fetch_embeddings(glove_file)
 
@@ -144,15 +155,24 @@ if __name__ == "__main__":
         }
     )
 
+    if not os.path.exists(args.outdir):
+        os.makedirs(args.outdir)
+
+    print("Generating data for stan model")
     with open(os.path.join(args.outdir, "data.json"), "w") as write_handle:
         write_handle.write(data)
+    print("Generated files: " + os.path.join(args.outdir, "data.json"))
         
+    print("Generating embedding matrix")
     with open(os.path.join(args.outdir, "embedding_matrix.pkl"), "wb") as write_handle:
         pickle.dump(embedding_matrix, write_handle)
+    print("Generated files: " + os.path.join(args.outdir, "embedding_matrix.pkl"))
     
+    print("Saving the complete list of words for our models")
     with open(os.path.join(args.outdir, "word_list.pkl"), "wb") as write_handle:
         pickle.dump(word_list, write_handle)
-    
+    print("Generated files: " + os.path.join(args.outdir, "word_list.pkl"))
+
     with open(os.path.join(args.outdir, "pairs.pkl"), "wb") as write_handle:
         pickle.dump(np.hstack((np.array(word1_embeddings), np.array(word2_embeddings), np.array(y).reshape(len(y), 1))), write_handle)
     
