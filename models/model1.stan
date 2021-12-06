@@ -25,9 +25,6 @@ data {
 
     dot = (dot+1)/2; // rescaling cosine similarity from [-1,1] to [0,1]
 
-    //samp1~beta(1+dot,1-dot);
-    //samp2~beta(1-dot,1+dot);
-
     target+= y[n]*beta_lpdf(dot|50,1) +(1-y[n])*beta_lpdf(dot|1,50);
  }
  }
