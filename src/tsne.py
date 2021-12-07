@@ -33,15 +33,18 @@ word_pair = pickle.load(open("word_pairs.pkl", "rb"))
 embd_pairs = pickle.load(open("pairs.pkl", "rb"))
 
 
-X_trans = transform_model3(X) #CHANGE MODEL NUMBER HERE
-#X_embedded = TSNE(n_components=2, learning_rate='auto', init='random').fit_transform(X_trans)
+np.save('glove_X_embedding.npy',TSNE(n_components=2, learning_rate='auto', init='random').fit_transform(X))
+np.save('model1_X_embedding.npy',TSNE(n_components=2, learning_rate='auto', init='random').fit_transform(transform_model1(X)))
+np.save('model3_X_embedding.npy',TSNE(n_components=2, learning_rate='auto', init='random').fit_transform(transform_model3(X)))
+
+
 X_embedded_1 = np.load('model1_X_embedding.npy')
 X_embedded_3 = np.load('model3_X_embedding.npy')
 X_embedded_glove = np.load('glove_X_embedding.npy')
 
 X_embedded_list = [X_embedded_glove, X_embedded_1,X_embedded_3]
 
-indices =[4,6,9,13,17] #Indices of pairs to plot
+indices = [28, 110, 239, 781, 1023, 985, 1056, 1090, 1230, 1839] #Indices of pairs to plot
 
 for X_embedded in X_embedded_list:
 
@@ -51,8 +54,8 @@ for X_embedded in X_embedded_list:
     
     plt.scatter(select_word_embeddings[:,0],select_word_embeddings[:,1],linewidths=1,color='blue')
     plt.grid()
-    plt.xlabel("PC1",size=15)
-    plt.ylabel("PC2",size=15)
+    plt.xlabel("X1",size=15)
+    plt.ylabel("X2",size=15)
     plt.title("Word Embedding Space",size=20)
     
     for i, word in enumerate(select_word_pairs):
