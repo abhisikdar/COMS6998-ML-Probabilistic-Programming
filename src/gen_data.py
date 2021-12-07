@@ -8,6 +8,7 @@ import json
 import requests
 import shutil
 
+#data = https://www.ims.uni-stuttgart.de/en/research/resources/experiment-data/antonym-synonym-dataset/
 GLOVE_URL = "http://nlp.stanford.edu/data/glove.6B.zip"
 DATA_URL = "https://www.ims.uni-stuttgart.de/documents/ressourcen/experiment-daten/antonym-synonym-dataset/ant_syn_pairs.zip"
 
@@ -107,6 +108,7 @@ def load_syn_ant_dset(dir, embedding_dict, dim):
             pairs = f.readlines()
             for pair in tqdm.tqdm(pairs):
                 word1, word2, label = pair.split('\t')
+                # print(word1, word2, label)
                 if word1 in embedding_dict and word2 in embedding_dict:
                     v1_embeds.append(embedding_dict[word1].tolist())
                     v2_embeds.append(embedding_dict[word2].tolist())
@@ -143,6 +145,12 @@ if __name__ == "__main__":
     embeddings = fetch_embeddings(glove_file)
 
     word1_embeddings, word2_embeddings, y, word_list, embedding_matrix, word1_list, word2_list = load_syn_ant_dset(args.data_dir, embeddings, 100)
+
+    for i in range(len(y)):
+        if y[i] == 1:
+            y[i] = 0
+        else:
+            y[i] = 1
 
     data = json.dumps(
         {   
