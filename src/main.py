@@ -24,7 +24,6 @@ if run_model_1 :
     np.save('a.npy',a)
 
 if run_model_2:
-    !gdown https://drive.google.com/uc?id=115re9bhyhZBHHKsl7XV893fVN-Rpo1Y9&export=download
     stan = 'model2.stan'
     model = CmdStanModel(stan_file=stan)
     model.name
@@ -49,7 +48,6 @@ if run_model_2:
     np.save('s_2.npy',s)
 
 if run_model_3 :
-    !gdown https://drive.google.com/uc?id=1wKW0VxtSU2f7kvrjWsMHoJqjwJlX4zZJ&export=download
     stan = 'model3.stan'
     model = CmdStanModel(stan_file=stan)
     model.name
